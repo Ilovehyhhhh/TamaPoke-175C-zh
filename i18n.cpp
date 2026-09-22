@@ -272,6 +272,38 @@ static const char *const STRINGS[LANG_COUNT][STR_COUNT] = {
     "스타터를 선택하세요",
     "스프라이트 없음", "SD 카드에 넣어주세요",
   },
+  // ---------------- ZH (chino simplificado) ----------------
+  // El chino va en UTF-8 (fuente U8g2), como JA/KO. Se usa puntuacion ASCII
+  // (! ? : ,) para no depender de que el subconjunto chino traiga los signos
+  // CJK de ancho completo; el ASCII siempre esta presente.
+  {
+    "进化中!", "好吃!", "很喜欢!", "肚子饿了!", "该洗澡了!",
+    "累坏了...", "有点难过...", "有点胖了...", "是异色!!", "很开心",
+    "谢谢! 再见", "它逃走了...", "拜拜! 挥手告别...",
+    "蛋", "传说之蛋!?", "稀有之蛋!", "点击蛋...", "它动了!", "快了!",
+    "图鉴 %u/151",
+    "%s%s Lv.%u",
+    "放生 %s?", "是", "否",
+    "%u 击", "力量 +%u", "新纪录!", "纪录: %u", "快打!",
+    "分数: %u", "太开心了!", "+心情",
+    "设置时间", "时", "分", "上滑: 取消", "语言",
+    "勋章!", "太棒了!", "连续 %u 天!",
+    "连胜 %u  最高 %u", "亲密", "树果 ???", "红树果", "蓝树果", "绿树果",
+    "%s   年龄 %lu天", "点名字: 改名",
+    "战斗", "攻", "防", "速", "重", "训练力量",
+    "勋章 %d/%d", "点: 返回",
+    "名字:", "点击返回",
+    "食物", "心情", "体力", "卫生",
+    "最高 %u",
+    "成长", "Lv.%u", "%u 分钟后 Lv.%u", "进化", "最终形态",
+    "可以进化了!", "全部>=40才能进化",
+    "%u 级后进化", "失误: %u",
+    "声音 开", "声音 关",
+    "进化!", "%s 有话要说...", "%s 觉得被抛弃了...",
+    "要进化吗?", "保持形态", "要告别吗?", "告别", "继续陪伴",
+    "选择初始伙伴",
+    "没有立绘", "请放入SD卡",
+  },
 };
 
 // Nombres de medalla en sus tres longitudes [idioma][medalla].
@@ -284,6 +316,7 @@ static const char *const MED_NAME[LANG_COUNT][MED_COUNT] = {
   { "Niv.10", "Niv.25", "Niv.50", "BAGA", "SEQ 7", "LACO", "FORMA MAX", "EM FORMA" },
   { "Lv.10", "Lv.25", "Lv.50", "きのみ", "7にち", "なかよし", "さいしゅう", "げんき" },
   { "Lv.10", "Lv.25", "Lv.50", "열매", "연속 7일", "유대", "최고 컨디션", "건강함" },
+  { "等级10", "等级25", "等级50", "树果", "连胜7", "亲密", "最终", "苗条" },
 };
 static const char *const MED_LBL[LANG_COUNT][MED_COUNT] = {
   { "Nv10", "Nv25", "Nv50", "BAYA", "7DIAS", "VINC", "TOPE", "SANO" },
@@ -294,6 +327,7 @@ static const char *const MED_LBL[LANG_COUNT][MED_COUNT] = {
   { "Niv10", "Niv25", "Niv50", "BAGA", "7DIAS", "LACO", "MAX", "FIT" },
   { "Lv10", "Lv25", "Lv50", "きのみ", "7にち", "なかよし", "しんか", "げんき" },
   { "Lv10", "Lv25", "Lv50", "열매", "7일", "유대", "최고", "건강" },
+  { "10级", "25级", "50级", "树果", "7天", "亲密", "最终", "苗条" },
 };
 static const char *const MED_DSC[LANG_COUNT][MED_COUNT] = {
   { "NIVEL 10", "NIVEL 25", "NIVEL 50", "BAYA HALLADA",
@@ -312,6 +346,8 @@ static const char *const MED_DSC[LANG_COUNT][MED_COUNT] = {
     "7にち れんぞく", "なかよし MAX", "さいしゅうしんか", "げんきいっぱい" },
   { "레벨 10", "레벨 25", "레벨 50", "열매 발견",
     "연속 7일", "유대감 최대", "최종 진화", "건강함" },
+  { "等级10", "等级25", "等级50", "发现树果",
+    "连胜7天", "亲密满", "最终形态", "保持苗条" },
 };
 
 const char *T(StrId id) { return STRINGS[gLang][id]; }

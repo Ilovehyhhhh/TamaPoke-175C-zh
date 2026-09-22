@@ -1,73 +1,70 @@
-# TamaPoke web installer
+# TamaPoke 网页安装器
 
-A one-click page that flashes the firmware and loads the sprites from the browser
-(Chrome/Edge), with no Arduino or drivers. It uses
-[ESP Web Tools](https://esphome.github.io/esp-web-tools/) to flash and **Web
-Serial** to push the sprites to the SD with the firmware's `PUT` protocol (the
-same one as `tools/send_sd.py`).
+一个一键页面，在浏览器中（Chrome/Edge）刷入固件并加载精灵图，无需 Arduino 或
+驱动。它使用 [ESP Web Tools](https://esphome.github.io/esp-web-tools/) 刷机，
+并用 **Web Serial** 通过固件的 `PUT` 协议（与 `tools/send_sd.py` 相同）把精灵图
+推送到 SD 卡。
 
-## Contents
+## 内容
 
-- `index.html` — the page (flashing + sprite loader).
-- `manifest.json` — ESP Web Tools config (points at the firmware).
-- `firmware/tamapoke.bin` — combined firmware, flashable at `0x0`.
-- `sprites.pak` — all the sprites in one bundle (TPAK), so the page sends them in
-  one click. **Generated** by `tools/pack_bundle.py` (gitignored by default — see
-  *Hosting the sprites* below).
+- `index.html` —— 页面（刷机 + 精灵图加载器）。
+- `manifest.json` —— ESP Web Tools 配置（指向固件）。
+- `firmware/tamapoke.bin` —— 合并后的固件，可在 `0x0` 处刷入。
+- `sprites.pak` —— 一个包内的全部精灵图（TPAK），页面可一键发送。
+  由 `tools/pack_bundle.py` **生成**（默认被 git 忽略——见下文*托管精灵图*）。
 
-## Regenerate
+## 重新生成
 
-After changing the firmware or the sprites:
+修改固件或精灵图之后：
 
 ```bash
-bash tools/build_web.sh        # recompiles -> firmware/tamapoke.bin AND rebuilds sprites.pak
+bash tools/build_web.sh        # 重新编译 -> firmware/tamapoke.bin 并重建 sprites.pak
 ```
 
-## Test locally
+## 本地测试
 
-Web Serial and ESP Web Tools need a **secure context**: `https://` or
-`http://localhost`. To test:
+Web Serial 与 ESP Web Tools 需要**安全上下文**：`https://` 或
+`http://localhost`。测试：
 
 ```bash
 cd web && python3 -m http.server 8000
-# open http://localhost:8000 in Chrome/Edge
+# 在 Chrome/Edge 中打开 http://localhost:8000
 ```
 
-## End-user flow
+## 终端用户流程
 
-1. **Install TamaPoke** → flashes the firmware (pick the USB port; tick "Erase
-   device" for a fresh board).
-2. **Connect board** + **Load sprites** → downloads `sprites.pak` and copies it to
-   the microSD over USB (progress bar, ~8–10 min). Close the step-1 install tab
-   first: only one program can use the port at a time.
-3. Restart (PWR button) → choose your starter and play.
+1. **安装 TamaPoke** → 刷入固件（选择 USB 端口；新板子请勾选 “Erase
+   device”）。
+2. **连接开发板** + **加载精灵图** → 下载 `sprites.pak` 并通过 USB 复制到
+   microSD（有进度条，约 8–10 分钟）。请先关闭第 1 步的安装标签页：同一时间
+   只能有一个程序使用该端口。
+3. 重启（PWR 按键）→ 选择你的初始宝可梦并开始游玩。
 
-A hidden "pick them manually" option lets advanced users send their own `.bin`.
+一个隐藏的“手动挑选”选项让进阶用户发送自己的 `.bin`。
 
-## Hosting the sprites
+## 托管精灵图
 
-`sprites.pak` is ~58 MB and **gitignored** so it doesn't bloat the repo. To make
-the one-click sprite loader work on a real deployment, pick one:
+`sprites.pak` 约 58 MB 且被 **git 忽略**，以免撑大仓库。要让一键精灵图加载器在
+真实部署中可用，选一种：
 
-- **Commit it** — add `web/sprites.pak` to git and serve it from Pages. Simple,
-  but doubles the repo's sprite size.
-- **Release asset** — attach `sprites.pak` to a GitHub Release and change the
-  `fetch('sprites.pak')` URL in `index.html` to the release URL (keeps the repo
-  small; watch out for CORS on the asset host).
+- **提交它** —— 把 `web/sprites.pak` 加入 git 并从 Pages 提供。简单，
+  但会使仓库的精灵图体积翻倍。
+- **发布资源** —— 把 `sprites.pak` 附到 GitHub Release，并把 `index.html` 中的
+  `fetch('sprites.pak')` URL 改为 release URL（保持仓库小巧；注意资源主机的
+  CORS）。
 
-All sprites are from PMD SpriteCollab, CC BY-NC (non-commercial sharing with
-attribution is allowed); see [`../CREDITS.md`](../CREDITS.md).
+所有精灵图均来自 PMD SpriteCollab，CC BY-NC（允许带署名的非商业分享）；
+见 [`../CREDITS.md`](../CREDITS.md)。
 
-## Deploy (GitHub Pages)
+## 部署（GitHub Pages）
 
-1. Repo settings → Pages → serve from `main`, folder `/web` (or move `web/` to
-   `docs/`). Pages gives HTTPS automatically.
-2. URL ends up at `https://<user>.github.io/<repo>/`.
+1. 仓库设置 → Pages → 从 `main` 提供，目录 `/web`（或把 `web/` 移到
+   `docs/`）。Pages 会自动提供 HTTPS。
+2. 最终 URL 为 `https://<user>.github.io/<repo>/`。
 
-> **Pages on private repos** needs GitHub Pro/Team. If you make the repo
-> **public** to use Pages for free, decide about the sprites first (see above and
-> CREDITS).
+> **私有仓库使用 Pages** 需要 GitHub Pro/Team。如果你为了免费使用 Pages 而把
+> 仓库设为**公开**，请先决定精灵图的处理方式（见上文与 CREDITS）。
 
-## Limitations
+## 限制
 
-- Desktop **Chrome/Edge** only (Web Serial isn't in Firefox/Safari).
+- 仅桌面版 **Chrome/Edge**（Firefox/Safari 不支持 Web Serial）。

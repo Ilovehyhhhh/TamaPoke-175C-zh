@@ -1,41 +1,37 @@
-# Credits
+# 致谢
 
-TamaPoke is a **non-commercial, personal-use** project. It does not sell or
-commercially redistribute any copyrighted material. Pokémon and all related
-names, designs and characters are trademarks and © of **Nintendo / Game Freak /
-The Pokémon Company**.
+TamaPoke 是一个**非商业、个人使用**的项目。它不销售、也不以商业方式再分发任何
+受版权保护的材料。宝可梦及所有相关名称、设计和角色均为
+**Nintendo / Game Freak / The Pokémon Company** 的商标与 ©。
 
-This project is not affiliated with or endorsed by any of those companies.
+本项目与上述公司无隶属关系，也未获其认可。
 
-## Sprites and data
+## 精灵图与数据
 
-| Resource | Source | Use in the project |
+| 资源 | 来源 | 在项目中的用途 |
 |---|---|---|
-| **All sprites** (idle, walk, sleep, eat, hurt, attack…) | [PMD Sprite Collaboration (PMDCollab/SpriteCollab)](https://github.com/PMDCollab/SpriteCollab) | Mystery-Dungeon-style animated sprites used everywhere: main screen, stat card, minigame, and the Pokédex grid + detail view |
-| **Gen 1 base stats** | [PokéAPI](https://pokeapi.co) | Real ATK/DEF/SPD/HP for each species |
+| **所有精灵图**（待机、行走、睡觉、进食、受伤、攻击……）| [PMD Sprite Collaboration (PMDCollab/SpriteCollab)](https://github.com/PMDCollab/SpriteCollab) | 处处使用的《不可思议的迷宫》风格动画精灵图：主界面、属性卡、小游戏，以及图鉴网格 + 详情视图 |
+| **第一世代种族值** | [PokéAPI](https://pokeapi.co) | 每个物种真实的攻/防/速/HP |
 
-The **SpriteCollab** sprites are the work of its community of artists under their
-own terms (Creative Commons Attribution-NonCommercial 4.0). Per-species/per-author
-credit is in the original repository's
-[tracker.json](https://github.com/PMDCollab/SpriteCollab/blob/master/tracker.json).
-Huge thanks to that whole community for an enormous amount of work.
+**SpriteCollab** 精灵图是其社区画师们在各自条款下
+（知识共享 署名-非商业性使用 4.0）的作品。按物种/按作者的署名见原仓库的
+[tracker.json](https://github.com/PMDCollab/SpriteCollab/blob/master/tracker.json)。
+衷心感谢整个社区付出的巨大努力。
 
-> **Important if you reuse this repo:** the packaged sprite files
-> (`tools/sdcard/mons/*.bin`) are derived from the sources above. Don't
-> redistribute them commercially. If you publish the project, the clean approach
-> is to distribute **only the code and scripts**, and have each user download and
-> package the sprites from the original sources with `tools/pack_*.py` (or the web
-> installer).
+> **如果你复用本仓库，请注意：** 打包的精灵图文件
+> （`tools/sdcard/mons/*.bin`）派生自上述来源。请勿将其用于商业再分发。
+> 如果你要发布本项目，干净的做法是**只分发代码与脚本**，让每位用户用
+> `tools/pack_*.py`（或网页安装器）从原始来源下载并打包精灵图。
 
-## Software / hardware
+## 软件 / 硬件
 
-| Component | Author / source |
+| 组件 | 作者 / 来源 |
 |---|---|
 | GFX Library for Arduino | [moononournation](https://github.com/moononournation/Arduino_GFX) |
-| SensorLib (CST9217 touch, PCF85063 RTC) | [Lewis He / lewisxhe](https://github.com/lewisxhe/SensorLib) |
-| XPowersLib (AXP2101 PMU) | [Lewis He / lewisxhe](https://github.com/lewisxhe/XPowersLib) |
-| U8g2 (CJK font data only) | [olikraus](https://github.com/olikraus/u8g2) |
-| Board and pinout | [Waveshare ESP32-S3-Touch-AMOLED-1.75](https://www.waveshare.com/wiki/ESP32-S3-Touch-AMOLED-1.75) |
-| Web installer | [ESP Web Tools](https://esphome.github.io/esp-web-tools/) (Nabu Casa) |
+| SensorLib（CST9217 触摸、PCF85063 RTC）| [Lewis He / lewisxhe](https://github.com/lewisxhe/SensorLib) |
+| XPowersLib（AXP2101 PMU）| [Lewis He / lewisxhe](https://github.com/lewisxhe/XPowersLib) |
+| U8g2（仅中日韩字体数据）| [olikraus](https://github.com/olikraus/u8g2) |
+| 开发板与引脚 | [Waveshare ESP32-S3-Touch-AMOLED-1.75](https://www.waveshare.com/wiki/ESP32-S3-Touch-AMOLED-1.75) |
+| 网页安装器 | [ESP Web Tools](https://esphome.github.io/esp-web-tools/)（Nabu Casa）|
 
-TamaPoke's own code (firmware and tools) is original work.
+TamaPoke 自身的代码（固件与工具）均为原创作品。

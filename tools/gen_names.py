@@ -14,7 +14,7 @@ import time
 import unicodedata
 
 LANGS = ('fr', 'de')
-LANGS_UTF8 = ('ja-hrkt', 'ko')  # CJK: van tal cual en UTF-8, no en octal ASCII
+LANGS_UTF8 = ('ja-hrkt', 'ko', 'zh-hans')  # CJK: van tal cual en UTF-8, no en octal ASCII
 
 # Convencion de genero por idioma: ni la tabla CP437 ni ningun subconjunto
 # unifont de U8g2 traen ♀/♂, asi que cada idioma elige con que los sustituye.

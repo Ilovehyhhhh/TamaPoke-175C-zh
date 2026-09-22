@@ -25,7 +25,7 @@
 
 // Version del firmware. Subir este numero en cada release (y manifest.json para
 // el instalador web). Se muestra en la pantalla de ajustes y por serie al arrancar.
-#define FW_VERSION "1.17"
+#define FW_VERSION "1.18"
 
 Arduino_DataBus *bus = new Arduino_ESP32QSPI(
   LCD_CS, LCD_SCLK, LCD_SDIO0, LCD_SDIO1, LCD_SDIO2, LCD_SDIO3);
@@ -892,6 +892,10 @@ int gFontAscent = 0;  // px del borde superior a la linea base, 0 = fuente clasi
 // japonesa. El ascenso si se mide en tiempo de ejecucion en applyLangFont().
 #define CJK_FONT_JA u8g2_font_unifont_t_japanese3
 #define CJK_FONT_KO u8g2_font_unifont_t_korean2
+// El chino usa la misma familia unifont (16 px) para que CJK_SIZE_DIV=2 cuadre
+// con el latin. chinese3 es el subconjunto mas amplio de los chinese1/2/3; si
+// no cupiera en flash, bajar a chinese2/chinese1 (menos glifos) o a un wqy*.
+#define CJK_FONT_ZH u8g2_font_unifont_t_chinese3
 #define CJK_SIZE_DIV 2
 
 void setSize(uint8_t n) {
@@ -920,7 +924,8 @@ void applyLangFont() {
     gFontAscent = 0;
     return;
   }
-  gfx->setFont((gLang == LANG_KO) ? CJK_FONT_KO : CJK_FONT_JA);
+  gfx->setFont((gLang == LANG_KO) ? CJK_FONT_KO
+               : (gLang == LANG_ZH) ? CJK_FONT_ZH : CJK_FONT_JA);
   gfx->setUTF8Print(true);     // las cadenas CJK son UTF-8 multibyte
   int16_t x1, y1;
   uint16_t w, h;
@@ -1490,7 +1495,7 @@ void drawClockBtn(int x, int y, const char *l) {
 #define LANG_PILL_H 30
 #define LANG_PILL_X 336          // pildora de idioma (cicla LANG_COUNT al tocar)
 #define LANG_PILL_W 96
-static const char *const LANG_CODES[LANG_COUNT] = { "ES", "EN", "FR", "DE", "IT", "PT", "JA", "KO" };
+static const char *const LANG_CODES[LANG_COUNT] = { "ES", "EN", "FR", "DE", "IT", "PT", "JA", "KO", "ZH" };
 
 void renderClock() {
   gfx->fillScreen(RGB565_BLACK);

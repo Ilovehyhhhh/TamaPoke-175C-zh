@@ -1,255 +1,233 @@
-# Changelog
+# 更新日志
 
-All notable changes to the firmware. Versions match the number shown at the
-bottom of the clock/settings screen (swipe down) and `web/manifest.json`.
+固件的所有重要变更。版本号与时钟/设置界面（下滑）底部以及
+`web/manifest.json` 中显示的数字一致。
 
-Updating from the [web installer](https://socquique.github.io/TamaPoke/web/)
-**without** ticking "Erase device" keeps your Pokémon.
+从[网页安装器](https://socquique.github.io/TamaPoke/web/)更新时，**不**勾选
+“Erase device”即可保留你的宝可梦。
+
+## [1.18] - 2026-10-06
+
+### 新增
+
+- **简体中文，第九种语言，且现为默认语言。** 完整界面
+  （85 条字符串）加上三种长度的勋章名称和 151 个第一世代物种名称，采用与其他
+  语言相同的 `STRINGS[LANG][StrId]` 结构。中文与 JA/KO 一样使用 UTF-8；标点使用
+  ASCII（`! ? :`）而非全角 `！？：`，这样字符串就不依赖字体子集是否包含 CJK 标点。
+- 用于中文的 `u8g2_font_unifont_t_chinese3`，在 `applyLangFont()` 中按语言选择。
+  它是 `unifont_t_chinese1/2/3` 子集中最大的；若 flash 紧张可降至
+  `chinese2`/`chinese1`（或某个 `wqy*`）。与 JA/KO 字体同属 unifont 家族且同为
+  16 px，因此 `CJK_SIZE_DIV` 无需改动。
+- `dex.h` 中的 `DEX_NAME_ZH`（151 个官方简体中文名），并在
+  `tools/gen_names.py` 的 `LANGS_UTF8` 列表中加入 `zh-hans`、在
+  `tools/gen_dex.py` 的名称循环中加入 `'zh'`，以便重新生成。
+- 在 `LANG_CODES`、`LANG_NAME` 测试列表以及 i18n 格式检查器的语言列表中加入
+  `ZH`。
 
 ## [1.17] - 2026-09-18
 
-### Added
+### 新增
 
-- **Korean, the eighth language.** Full UI (85 strings), the three medal name
-  lengths and the 151 gen-1 species names, on the same `STRINGS[LANG][StrId]`
-  structure as every other language. The text measurement centralised in 1.15
-  carries almost all of it; the four byte-based spots a UTF-8 row turned up are
-  listed under Fixed.
-- `u8g2_font_unifont_t_korean2` for Hangul, selected per language in
-  `applyLangFont()` rather than through a single `CJK_FONT`. The Korean added
-  uses 296 distinct syllables, all of them in KS X 1001, the 2350-syllable set
-  that matches the size of `korean2`; `korean1` holds 478. Coverage was checked
-  as membership in KS X 1001 rather than by walking the font table, and the
-  ASCII in the strings is assumed present. Not yet checked on the board:
-  whether `CJK_SIZE_DIV` suits `korean2` as it does the Japanese subset.
+- **韩语，第八种语言。** 完整界面（85 条字符串）、三种长度的勋章名称和 151 个
+  第一世代物种名称，采用与其他语言相同的 `STRINGS[LANG][StrId]` 结构。1.15 中
+  集中化的文本度量几乎承载了全部工作；一行 UTF-8 暴露出的四处基于字节的位置
+  列在“修复”下。
+- 用于谚文的 `u8g2_font_unifont_t_korean2`，按语言在 `applyLangFont()` 中选择，
+  而非通过单一的 `CJK_FONT`。新增的韩语使用 296 个不同音节，全部属于 KS X 1001
+  这个 2350 音节的集合，与 `korean2` 的规模相符；`korean1` 仅含 478 个。覆盖
+  范围是通过“是否属于 KS X 1001”而非遍历字体表来检查的，字符串中的 ASCII 则
+  默认存在。尚未在板子上验证：`CJK_SIZE_DIV` 是否对 `korean2` 像对日语子集那样
+  合适。
 
-### Fixed
+### 修复
 
-- **The release dialog could cut a Korean name mid-character.**
-  `renderRelease()` built into `char q[28]`. `"%s 놓아줄까요?"` is 17 bytes
-  before the name, so names of four syllables or more (34 of the 151) did not
-  fit, and `snprintf` truncated inside a 3-byte sequence, leaving a tail the
-  font cannot decode. Now 48; the longest case needs 33 bytes including the
-  terminator.
-- **Three places sized and positioned text with `strlen()`**, which counts
-  bytes: the stat-card header, the species name under a nickname, and the
-  gallery detail header. On a UTF-8 row the centring offset and the auto-shrink
-  threshold worked off a byte count rather than a width. All three now go
-  through `textW()` / `centerX()`. With the classic font `textW()` returns
-  `strlen()*6*size`, the same expression as before, so the six Latin languages
-  land on the same coordinate at the same size, checked at every length from 1
-  to 25.
-- **Three Japanese texts were cut short**, all already in 1.15 and 1.16.
-  Their buffers were sized when every string was one byte per character, and
-  `snprintf` truncates without a trace. The minigame record read `きろく 2`
-  with a best of 219, since `char rec[12]` left room for one digit. The streak
-  milestone banner never fit at all: `"%u にちれんぞく！"` passes 20 bytes with a
-  single digit, and the cut landed mid-character. The streak line on the stat
-  card lost digits from 100 days on. The release dialog fixed above was the
-  fourth.
-- **Every formatted text is now checked against its buffer, in all eight
-  languages.** A new test in `test/test_tools.py` finds each
-  `snprintf(buf, sizeof(buf), T(...))` in the sketch, reads the size of `buf`,
-  and computes the worst case per language from the argument types (5 digits
-  for `%u`/`%d`, 10 for `%lu`, and a declared maximum for each `%s`). It is what
-  caught the three above, and it would have caught all four. To keep it passing
-  by type rather than by typical value, four more buffers get headroom they had
-  not yet needed: the medal count, the next-level line, the evolution countdown
-  and the profile line.
-- **`tools/test_i18n_formats.py` reads only the first `len(LANGS)` language
-  blocks**, and `LANGS` listed six, so later rows were skipped without a
-  warning. It now lists all eight, and the docstring notes that it needs to
-  stay complete.
-- **`test/test_i18n.cpp`'s `LANG_NAME[LANG_COUNT]` had six entries**, fewer
-  than `LANG_COUNT`, so every entry past the sixth was null. Four of the tests
-  build a label from `LANG_NAME[lang]` on every iteration, not only when a
-  check fails, so each run passed a null pointer to `%s`. Now lists all eight.
+- **放生对话框可能把韩语名称从字符中间截断。**
+  `renderRelease()` 构造到 `char q[28]`。`"%s 놓아줄까요?"` 在名称前占 17 字节，
+  因此四个音节及以上的名称（151 个中有 34 个）放不下，`snprintf` 会在一个 3
+  字节序列内部截断，留下字体无法解码的尾部。现改为 48；最长的情况含终止符需要
+  33 字节。
+- **有三处用 `strlen()` 设置文本大小和位置**，而它统计的是字节数：属性卡标题、
+  昵称下方的物种名，以及画廊详情标题。在 UTF-8 行上，居中偏移和自动缩小阈值
+  基于字节数而非宽度工作。三处现都改走 `textW()` / `centerX()`。使用经典字体时
+  `textW()` 返回 `strlen()*6*size`，与之前相同的表达式，因此六种拉丁语言在同一
+  尺寸下落在同一坐标，已从长度 1 到 25 逐一检查。
+- **三段日语文本被截短**，全部在 1.15 和 1.16 时就已存在。它们的缓冲区是在每个
+  字符一个字节时确定的，而 `snprintf` 会不留痕迹地截断。小游戏纪录显示为
+  `きろく 2`，而最佳成绩是 219，因为 `char rec[12]` 只留了一位数字的空间。连胜
+  里程碑横幅根本放不下：`"%u にちれんぞく！"` 在单个数字时就超过 20 字节，截断
+  落在字符中间。属性卡上的连胜行从 100 天起丢失数字。上面修复的放生对话框是第四处。
+- **现在所有格式化文本都会在全部八种语言下对照其缓冲区检查。** `test/test_tools.py`
+  中新增的测试会找到 sketch 里的每个 `snprintf(buf, sizeof(buf), T(...))`，读取
+  `buf` 的大小，并根据参数类型（`%u`/`%d` 为 5 位，`%lu` 为 10 位，每个 `%s` 使用
+  声明的最大值）计算每种语言的最坏情况。正是它抓住了上面三处，本也能抓住全部四处。
+  为使其按类型而非典型值通过，又有四个缓冲区获得了此前尚不需要的余量：勋章计数、
+  下一级行、进化倒计时和资料行。
+- **`tools/test_i18n_formats.py` 只读取前 `len(LANGS)` 个语言块**，而 `LANGS`
+  列了六个，因此后面的行会被静默跳过。现列出全部八个，且文档字符串注明它需要
+  保持完整。
+- **`test/test_i18n.cpp` 的 `LANG_NAME[LANG_COUNT]` 只有六项**，少于 `LANG_COUNT`，
+  因此第六项之后的每一项都是空指针。四个测试在每次迭代（而不仅当检查失败时）
+  都会用 `LANG_NAME[lang]` 构造标签，于是每次运行都会把空指针传给 `%s`。现列出
+  全部八个。
 
 ## [1.16] - 2026-09-09
 
-### Fixed
+### 修复
 
-- **Japanese was silently dropping every `！` and `？`.** 21 exclamation marks
-  and 4 question marks — a quarter of the Japanese strings, including the mood
-  line on the main screen (`ごきげん！` rendered as `ごきげん`). The cause is that
-  `u8g2_font_unifont_t_japanese1` carries kana and kanji but no CJK punctuation
-  at all — no `！？。、「」` — and `Arduino_GFX` draws nothing for a glyph it can't
-  find, without even advancing the cursor, so the loss is invisible in the
-  source and on screen. Switched to `japanese3`, the only U8g2 Japanese font
-  that has them. Same unifont family: the metrics header is byte-identical and
-  all 226 codepoints the firmware uses have byte-identical bitmaps, so nothing
-  moves. Costs 102 KB of flash (705 KB → 810 KB, 22% → 25% of the app
-  partition); RAM is unchanged.
-- **Nidoran♀ and Nidoran♂ both showed as ニドラン in Japanese**, leaving #29
-  and #32 indistinguishable in the Pokédex. No U8g2 unifont subset carries
-  ♀ (U+2640) or ♂ (U+2642) — not `japanese*`, `korean*` or `chinese*` — and
-  `Arduino_GFX` draws nothing for a glyph it can't find, without even
-  advancing the cursor. `gen_names.py` already substituted F and M on the
-  Latin path; it now does the same on the UTF-8 one, so the names read
-  ニドランF and ニドランM. Convention chosen by @usakomint, who preferred it
-  over ニドラン(女)/(男) as closer to a species name and shorter on a small
-  round screen.
+- **日语在静默丢弃每个 `！` 和 `？`。** 21 个感叹号和 4 个问号——占日语字符串的
+  四分之一，包括主界面的心情行（`ごきげん！` 被渲染成 `ごきげん`）。原因是
+  `u8g2_font_unifont_t_japanese1` 带有假名和汉字，但完全没有 CJK 标点——没有
+  `！？。、「」`——而 `Arduino_GFX` 对于找不到的字形什么都不画，甚至不移动光标，
+  因此这一丢失在源码和屏幕上都不可见。改用 `japanese3`，它是唯一拥有这些标点的
+  U8g2 日语字体。同属 unifont 家族：度量头逐字节相同，固件使用的全部 226 个码位
+  的位图也逐字节相同，因此没有任何东西移动。代价是 102 KB flash
+  （705 KB → 810 KB，占应用分区的 22% → 25%）；RAM 不变。
+- **尼多兰♀ 和尼多兰♂ 在日语中都显示为 ニドラン**，使 #29 和 #32 在图鉴中无法
+  区分。没有任何 U8g2 unifont 子集带有 ♀（U+2640）或 ♂（U+2642）——
+  `japanese*`、`korean*` 或 `chinese*` 都没有——而 `Arduino_GFX` 对于找不到的
+  字形什么都不画，甚至不移动光标。`gen_names.py` 已在拉丁路径上替换为 F 和 M；
+  现在在 UTF-8 路径上也这样做，因此名称读作 ニドランF 和 ニドランM。该约定由
+  @usakomint 选定，他认为它比 ニドラン(女)/(男) 更像物种名，而且在小小的圆形
+  屏幕上更短。
 
-Both confirmed on hardware by @usakomint, who also — without knowing it —
-supplied the evidence for the first one: the missing `！` was visible in a
-photo he posted of the v1.15 main screen.
+以上两项均由 @usakomint 在真机上确认，他还——在不知情的情况下——为第一项提供了
+证据：缺失的 `！` 在他发布的一张 v1.15 主界面照片中清晰可见。
 
 ## [1.15] - 2026-09-08
 
-### Added
+### 新增
 
-- **Japanese.** UI, medals and all 151 species names in katakana (フシギダネ,
-  ピカチュウ). Selectable from the settings screen like any other language.
+- **日语。** 界面、勋章和全部 151 个物种名称均为片假名（フシギダネ、
+  ピカチュウ）。可像其他语言一样在设置界面中选择。
 
-### Changed
+### 变更
 
-- Text measurement and cursor positioning are now centralized (`textW()`,
-  `centerX()`, `setCur()`, `setSize()`, `printT()`), replacing ~180 sites that
-  assumed one byte per character and a fixed 6 px width. Latin languages render
-  identically — the equivalence is arithmetic, not approximate. This is what
-  makes CJK possible without a per-language branch at every draw site, and
-  Chinese and Korean now only need their strings.
-- Bar positions on the stat card and the care row are derived from the width of
-  the widest translated label instead of fixed coordinates, so they stay aligned
-  in any language. With Latin labels the numbers come out identical to before.
-- New dependency: **U8g2**, for its CJK font data only.
+- 文本度量与光标定位现集中化（`textW()`、`centerX()`、`setCur()`、`setSize()`、
+  `printT()`），取代了约 180 处假设“每字符一字节、固定 6 px 宽”的代码。拉丁语言
+  渲染完全相同——这种等价是算术上的，而非近似。正因如此，才能在每个绘制点无需
+  按语言分支地支持 CJK，而中文和韩语现在只需要各自的字符串。
+- 属性卡上的条位置和照顾行由最宽翻译标签的宽度推导，而非固定坐标，因此在任何
+  语言下都保持对齐。使用拉丁标签时，数值与之前完全一致。
+- 新依赖：**U8g2**，仅使用其 CJK 字体数据。
 
-Japanese font handling, readability and layout were all tuned against real
-hardware by @usakomint, who found and diagnosed every issue in the process.
+日语字体处理、可读性与布局均由 @usakomint 对照真机调优，他在此过程中发现并诊断
+了每一个问题。
 
 ## [1.11] - 2026-09-07
 
-### Fixed
+### 修复
 
-- **The whole loop froze for exactly 1 second when touching the screen.**
-  `touch.getPoint()` hung on a sleeping CST9217 for the ESP32 I2C driver's
-  default 1000 ms timeout, which `Wire.setTimeOut(50)` doesn't bound because
-  SensorLib doesn't route through it. Most visible in the ball minigame, where
-  taps come fast and two or three stalls ran together — reported as "freezes for
-  2–3 seconds on ball tap". An address-only Wire transaction before the read
-  fixes it. Measured on hardware over equivalent play (~470 touch reads): 5
-  stalls in 60 s before, 0 after. Reported by @gingsiro.
+- **触摸屏幕时整个循环会恰好冻结 1 秒。** `touch.getPoint()` 在休眠的 CST9217
+  上会卡住 ESP32 I2C 驱动默认的 1000 ms 超时，而 `Wire.setTimeOut(50)` 无法限制
+  它，因为 SensorLib 不经过它。在精灵球小游戏中最为明显，那里点击很快，会有两三
+  次停顿连在一起——反馈为“点球时卡 2–3 秒”。在读取前先做一次仅地址的 Wire 事务
+  即可修复。在真机上以等价玩法测量（约 470 次触摸读取）：修复前 60 秒内 5 次停顿，
+  修复后 0 次。由 @gingsiro 报告。
 
 ## [1.10] - 2026-09-07
 
-### Fixed
+### 修复
 
-- TPK2 sprites with zero-length frame durations spun `pmdFrameAt()` forever,
-  hanging the render loop. These files arrive over USB, so they aren't trusted
-  input: durations are clamped at load time and the loop is bounded regardless.
-- `thumbs.bin` was mapped into PSRAM without bounding its size or checking that
-  the offsets it contains point inside what was actually read. A truncated file
-  (plausible — the transfer takes minutes) could read past the allocation.
-- The serial `PUT` handler ignored `f.write()`'s return value, so a full SD card
-  still reported `DONE` while leaving a truncated file behind. It also took the
-  destination path straight from the serial line, so a crafted `PUT` could write
-  anywhere on the card; writes are now confined to `/mons/`.
-- Touches just outside the Pokédex grid and the on-screen keyboard were treated
-  as cell 0. The guard divided first and then checked for a negative index, but
-  integer division truncates toward zero, so it never saw one. On a round screen
-  that strip is exactly where a finger lands near the edge.
+- 帧时长为零的 TPK2 精灵图会让 `pmdFrameAt()` 无限循环，卡住渲染循环。这些文件
+  经 USB 传入，因此不算可信输入：加载时会对时长做钳制，且无论如何循环都有界。
+- `thumbs.bin` 被映射进 PSRAM 时未限制其大小，也未检查其中偏移是否指向实际读取
+  到的范围之内。被截断的文件（很可能——传输要几分钟）可能越界读取。
+- 串口 `PUT` 处理程序忽略了 `f.write()` 的返回值，因此 SD 卡写满时仍报告 `DONE`，
+  却留下被截断的文件。它还直接从串口行取目的路径，因此精心构造的 `PUT` 可以写到
+  卡上任意位置；现在写入被限制在 `/mons/` 内。
+- 刚好落在图鉴网格和屏上键盘之外的触摸会被当作单元格 0。防护先做除法再检查负数
+  索引，但整数除法向零截断，因此它永远看不到负数。在圆形屏幕上，那条区域正是
+  手指落在边缘附近的位置。
 
-All four from @ajtudela.
+以上四项均来自 @ajtudela。
 
 ## [1.9] - 2026-09-07
 
-### Fixed
+### 修复
 
-- All ~13 game timers compared `millis()` against an absolute deadline, which
-  gives the wrong answer once `millis()` wraps at ~49.7 days of uptime: a timer
-  could stay active forever, or a ceremony cut off instantly.
-- The sprite transfer restarted from scratch on every attempt. It now records
-  each confirmed file, so a reload after a dropped connection doesn't redo the
-  full ~40 MB / ~10 min.
-- Minigame physics advanced per frame rather than per unit of time, so the ball
-  fell measurably slower with a large sprite on screen (Charizard) than a small
-  one (Diglett) — high scores weren't comparable between species.
+- 约 13 个游戏计时器都用 `millis()` 与一个绝对截止时间比较，这在 `millis()` 于
+  约 49.7 天运行时长后回绕时会给出错误结果：计时器可能永远保持活动，或仪式瞬间
+  被切断。
+- 精灵图传输在每次尝试时都从头开始。现在它会记录每个已确认的文件，因此在连接
+  断开后重载不会重做完整的约 40 MB / 约 10 分钟。
+- 小游戏物理按帧而非按时间单位推进，因此屏幕上精灵图较大时（喷火龙）球的下落
+  明显比小时（地鼠）慢——不同物种之间的高分无法比较。
 
-### Security
+### 安全
 
-- `esp-web-tools` was loaded from a floating `@10` range with no integrity
-  check. Pinned to 10.4.0 with a verified sha384 SRI hash.
+- `esp-web-tools` 从浮动的 `@10` 范围加载且无完整性检查。现固定为 10.4.0 并附
+  经过验证的 sha384 SRI 哈希。
 
-All from @ajtudela.
+全部来自 @ajtudela。
 
 ## [1.8] - 2026-09-07
 
-### Fixed
+### 修复
 
-- **The level counter wrapped to 0 after ~10.6 days of play.** `level()`
-  returned `uint8_t` and, at 60 minutes per level, the level is the hour count —
-  so it rolled over at 256. Reachable in ordinary play, since "stay together"
-  postpones the farewell indefinitely. Now `uint16_t`, capped at 999.
-- Two related truncations found while fixing it: `calcStat()` took the level as
-  `uint8_t`, so stats would have overflowed anyway; and `canEvolveNow()` compared
-  against `(uint8_t)(evolveLevel + careMistakes)`, which wrapped with many care
-  mistakes and let evolution happen early. The stat card already computed that
-  threshold as `int`, so the screen and the actual check could disagree.
+- **等级计数器在游玩约 10.6 天后回绕到 0。** `level()` 返回 `uint8_t`，而在每级
+  60 分钟下，等级就是小时数——因此会在 256 处回绕。普通游玩即可达到，因为“继续
+  陪伴”会无限期推迟离别。现为 `uint16_t`，上限 999。
+- 修复时发现的两处相关截断：`calcStat()` 把等级取为 `uint8_t`，因此属性无论如何
+  都会溢出；且 `canEvolveNow()` 与 `(uint8_t)(evolveLevel + careMistakes)` 比较，
+  在失误很多时会回绕并让进化提前发生。属性卡本已将该阈值按 `int` 计算，因此屏幕
+  与实际检查可能不一致。
 
-Diagnosed by @ajtudela.
+由 @ajtudela 诊断。
 
 ## [1.7] - 2026-09-07
 
-### Fixed
+### 修复
 
-- **The UI had no accents, and the assumption behind that was wrong.** The code
-  stated in two places that the font had none. In fact `glcdfont.h` is a full
-  256-glyph CP437 table and `write()` doesn't filter bytes ≥ 0x80. Spanish now
-  has its tildes and ñ, German its umlauts, French its accents. Characters are
-  written as single bytes in octal, never UTF-8, because the UI centres with
-  `strlen(t) * 6`. Only strings whose length was unchanged were touched.
-  Uppercase accented vowels other than É aren't in CP437, so `EVOLUCION` and
-  `PROGRES` stay unaccented, as do Portuguese ã/õ.
-- German grammar, from the same contributor: "Wähle deinen Starter" (accusative),
-  "Leb wohl" as two words, "Entwicklung" rather than "Entwickelt", and more.
+- **界面没有重音符号，而这一假设是错的。** 代码在两处声明字体没有重音符号。事实
+  上 `glcdfont.h` 是一张完整的 256 字形 CP437 表，且 `write()` 不会过滤 ≥ 0x80
+  的字节。西班牙语现在有了波浪号和 ñ，德语有了变音符号，法语有了重音。字符以八
+  进制的单字节写出，绝不用 UTF-8，因为界面用 `strlen(t) * 6` 居中。只改动了长度
+  未变的字符串。É 以外的大写带重音元音不在 CP437 中，因此 `EVOLUCION` 和
+  `PROGRES` 保持无重音，葡萄牙语的 ã/õ 亦然。
+- 德语语法，来自同一位贡献者：“Wähle deinen Starter”（宾格）、“Leb wohl”作两个
+  词、“Entwicklung”而非“Entwickelt”等。
 
-Discovered by @danielberndt.
+由 @danielberndt 发现。
 
 ## [1.6] - 2026-09-07
 
-### Fixed
+### 修复
 
-- **Short sound effects were inaudible.** The amplifier was switched on 8 ms
-  before each effect, far less than the NS4150B needs to settle, so a 35 ms tap
-  finished before the speaker woke up. The boot jingle survived because it's
-  ~440 ms — which is why sound seemed to work at startup and nowhere else. The
-  amplifier now stays powered while sound is on and the pet is awake, matching
-  Waveshare's reference. Notes and amplitude are unchanged: this doesn't alter
-  the sound design, it just makes it audible.
+- **短音效听不见。** 放大器在每个音效前 8 ms 才开启，远少于 NS4150B 稳定所需的
+  时间，因此 35 ms 的点击在扬声器醒来之前就结束了。开机提示音得以存活，因为它约
+  440 ms——这就是为什么声音在启动时似乎可用、在别处却不行。现在只要声音开启且
+  宠物清醒，放大器就保持供电，与 Waveshare 的参考一致。音符与振幅不变：这不会改
+  变声音设计，只是让它可听见。
 
-Diagnosed by @djyf1.
+由 @djyf1 诊断。
 
 ## [1.5] - 2026-08-19
 
-### Added
+### 新增
 
-- Localized Pokémon names in French and German (Bulbizarre, Bisasam…). Only
-  those two differ in gen 1; Spanish, Italian and Portuguese officially use the
-  English names. Names come from PokéAPI via `tools/gen_names.py`.
+- 法语和德语的本土化宝可梦名称（Bulbizarre、Bisasam……）。第一世代只有这两种语言
+  不同；西班牙语、意大利语和葡萄牙语官方使用英文名。名称经
+  `tools/gen_names.py` 来自 PokéAPI。
 
 ## [1.4] - 2026-08-07
 
-### Fixed
+### 修复
 
-- **Bond was mathematically stuck.** It could gain at most 12 points a day, but
-  a single care mistake cost 3 and could repeat every 30 minutes — up to 144 a
-  day. With poops draining hygiene, mistakes chained and bond never recovered.
-  Two players independently reported it pinned at exactly 10, which is the
-  first-day ceiling of 13 minus one mistake. Daily cap 8 → 20, penalty 3 → 1,
-  cooldown 30 → 60 min.
+- **羁绊在数学上被卡死。** 它每天最多增长 12 点，但一次照顾失误就要扣 3 点，且
+  每 30 分钟可重复一次——一天最多扣 144 点。在便便拉低卫生的情况下，失误接连不断，
+  羁绊永远无法恢复。两名玩家独立报告它恰好卡在 10，这正是首日上限 13 减去一次失误。
+  每日上限 8 → 20，惩罚 3 → 1，冷却 30 → 60 分钟。
 
 ## [1.3] - 2026-08-07
 
-### Fixed
+### 修复
 
-- **The egg hatched by itself during starter selection.** Game time kept running
-  while the starter screen was open, so taking more than 3 minutes to choose
-  meant the egg hatched into the species already rolled — no egg animation, and
-  the player's choice ignored. Three community reports matched (Pikachu twice,
-  Eevee once). Time now freezes until a starter is chosen.
+- **蛋在初始选择期间自行孵化。** 初始界面打开时游戏时间仍在流逝，因此选择超过 3
+  分钟就意味着蛋会孵出已经掷出的物种——没有孵化动画，玩家的选择被忽略。三份社区
+  报告与之吻合（皮卡丘两次，伊布一次）。现在时间会冻结，直到选定初始宝可梦。
 
 ## [1.2] - 2026-06
 
-### Added
+### 新增
 
-- Firmware version shown at the bottom of the clock/settings screen.
+- 在时钟/设置界面底部显示固件版本。
