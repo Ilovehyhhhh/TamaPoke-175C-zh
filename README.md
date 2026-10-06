@@ -64,15 +64,29 @@
   **1.75C** 是另一块板子）
 - 圆形 466×466 AMOLED，**CO5300** 驱动（QSPI，80 MHz）
 - 电容触摸 **CST9217**（I2C，地址 0x5A）
-- **AXP2101**（电源 + 电池 + PWR 按键）、**PCF85063**（RTC）、microSD 卡槽
-- **QMI8658** IMU（计步）与 **ES8311** 音频编解码
-- 16 MB Flash + OPI PSRAM
+- **AXP2101**（电源管理 + 电池 + PWR 按键）、**PCF85063**（RTC）、
+  microSD 卡槽、**ES8311** 音频编解码（→ 功放 → MX1.25 接口上的外接扬声器）
+- 引脚取自[官方 Waveshare 仓库](https://github.com/waveshareteam/ESP32-S3-Touch-AMOLED-1.75)（见 `pin_config.h`）
+>>>>>>>>> Temporary merge branch 2
 
-## 开发构建
+## 库（Arduino IDE / arduino-cli）
 
-开发板配置：
+| 库 | 作者 | 用途 |
+|---|---|---|
+| GFX Library for Arduino（`Arduino_GFX`）| moononournation | QSPI 下的 CO5300 + PSRAM 中的帧缓冲 |
+| SensorLib | Lewis He | CST9217 触摸 + PCF85063 RTC |
+| XPowersLib | Lewis He | AXP2101 PMU（电池、亮度、PWR 按键）|
+| U8g2 | olikraus | 中日韩字形（`unifont_t_japanese3`，唯一同时带 `！？。、「」` 的日语子集；`unifont_t_korean2` 用于谚文，2350 个音节，对比 korean1 的 478 个；中文用 `unifont_t_chinese3`）；只使用字体数据，不用其显示驱动 |
+| ESP_I2S（ESP32 核心内置）| Espressif | 到 ES8311 编解码的 I2S |
 
-```
+## IDE 配置 / 编译
+
+- 开发板：**ESP32S3 Dev Module** · Flash **16MB** · PSRAM **OPI PSRAM**
+  （必需：466×466×16 位帧缓冲约 434 KB，位于 PSRAM 中）·
+  带 FAT 的分区方案（如 `16M Flash (3MB APP/9MB FATFS)`）·
+  USB CDC On Boot **Enabled**
+
+```bash
 FQBN="esp32:esp32:esp32s3:CDCOnBoot=cdc,FlashSize=16M,PSRAM=opi,PartitionScheme=app3M_fat9M_16MB"
 ```
 
