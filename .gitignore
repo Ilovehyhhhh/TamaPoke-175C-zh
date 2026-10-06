@@ -13,7 +13,7 @@ tools/demo_compare.js
 
 .DS_Store
 tools/pmd_cache/
-test/build/
+tests/build/
 
 # borrador local de la ficha de MakerWorld y modelado abandonado de la carcasa
 MAKERWORLD.md

@@ -1,5 +1,7 @@
 #include "sdmon.h"
 #include "pin_config.h"
+#include "dex.h"
+#include "thumb_format.h"
 #include <FS.h>
 #include <SD_MMC.h>
 
@@ -7,7 +9,7 @@ bool sdReady = false;
 bool sdDirty = false;
 SdThumbs thumbs;
 
-bool PmdMon::load(uint8_t dexNum, bool shiny) {
+bool PmdMon::load(uint16_t dexNum, bool shiny) {
   unload();
   if (!sdReady) return false;
 
@@ -50,7 +52,6 @@ bool PmdMon::load(uint8_t dexNum, bool shiny) {
     a.frames = nf;
     for (uint8_t k = 0; k < nf; k++) {
       a.ms[k] = p[0] | (p[1] << 8);
-      if (a.ms[k] == 0) a.ms[k] = 100;  // nunca 0: pmdFrameAt() giraria sin avanzar
       p += 2;
     }
     a.data = p;
@@ -85,58 +86,45 @@ void PmdMon::unload() {
   loaded = false;
 }
 
-void SdThumbs::unload() {
-  if (data) { free(data); data = nullptr; }
-  loaded = false;
-  count = 0;
-  size = 0;
-}
-
 bool SdThumbs::load() {
-  unload();  // recargar sin fugar el blob anterior
+  unload();
   if (!sdReady) return false;
   File f = SD_MMC.open("/mons/thumbs.bin", FILE_READ);
   if (!f) {
     Serial.println("sin thumbs.bin (galeria sin miniaturas)");
     return false;
   }
-  uint32_t sz = f.size();
-  // acota el tamano: evita un ps_malloc absurdo con un archivo corrupto
-  if (sz < 10 || sz > 2UL * 1024 * 1024) {
-    Serial.println("thumbs.bin invalido (tamano)");
-    f.close();
-    return false;
-  }
-  data = (uint8_t *)ps_malloc(sz);
-  if (!data || f.read(data, sz) != sz || memcmp(data, "TPTH", 4) != 0) {
+  uint32_t size = f.size();
+  data = (uint8_t *)ps_malloc(size);
+  uint16_t parsedCount = 0;
+  if (!data || f.read(data, size) != size ||
+      !validateThumbBlob(data, size, DEX_COUNT, &parsedCount)) {
     Serial.println("thumbs.bin invalido");
     if (data) { free(data); data = nullptr; }
     f.close();
     return false;
   }
   f.close();
-  memcpy(&count, data + 4, 2);
-  // la tabla de offsets (uno por especie) debe caber entera en lo leido
-  if ((uint32_t)6 + 4UL * count > sz) {
-    Serial.println("thumbs.bin invalido (tabla de offsets)");
-    unload();
-    return false;
-  }
-  size = sz;
+  dataSize = size;
+  count = parsedCount;
   loaded = true;
-  Serial.printf("miniaturas cargadas: %u (%u KB)\n", count, sz / 1024);
+  Serial.printf("miniaturas cargadas: %u (%u KB)\n", count, size / 1024);
   return true;
+}
+
+void SdThumbs::unload() {
+  if (data) free(data);
+  data = nullptr;
+  dataSize = 0;
+  count = 0;
+  loaded = false;
 }
 
 const uint8_t *SdThumbs::get(int16_t dex) const {
   if (!loaded || dex < 1 || dex > count) return nullptr;
   uint32_t off;
   memcpy(&off, data + 6 + 4 * (dex - 1), 4);
-  // el offset viene del fichero sin comprobar: sin esto, un thumbs.bin truncado
-  // o corrupto hacia leer fuera de la reserva de PSRAM
-  if (off > size - 3) return nullptr;  // la cabecera w,h,palCount debe caber (size >= 10 siempre)
-  uint32_t need = 3 + (uint32_t)data[off + 2] * 2 + (uint32_t)data[off] * data[off + 1];
-  if (need > size || off > size - need) return nullptr;  // y el blob entero tambien
+  if (off > dataSize - 3) return nullptr;
   return data + off;
 }
 
@@ -152,7 +140,7 @@ bool sdBegin() {
   return sdReady;
 }
 
-bool SdMon::load(uint8_t dexNum, bool shiny) {
+bool SdMon::load(uint16_t dexNum, bool shiny) {
   unload();
   if (!sdReady) return false;
 
@@ -241,19 +229,6 @@ bool sdSerialCommand(const String &line) {
       return true;
     }
     if (!path.startsWith("/")) path = "/" + path;
-    // acota la escritura a /mons/: la ruta llega tal cual de la linea serie, sin
-    // sanear, asi que un PUT manipulado podria escribir en cualquier sitio de la
-    // tarjeta. Los dos clientes reales (tools/send_sd.py y web/index.html) ya
-    // mandan nombres con el prefijo mons/.
-    if (!path.startsWith("/mons/") || path.indexOf("..") >= 0) {
-      Serial.println("ERR");
-      return true;
-    }
-    // FILE_WRITE ANADE al final si el fichero ya existe, asi que reintentar uno
-    // que quedo a medias lo alargaba en vez de reemplazarlo: quedaba un sprite
-    // corrupto y mas grande que el original. Importa mas desde que el instalador
-    // reanuda transferencias cortadas, porque reintenta justo los que fallaron.
-    if (SD_MMC.exists(path)) SD_MMC.remove(path);
     File f = SD_MMC.open(path, FILE_WRITE);
     if (!f) {
       Serial.println("ERR");
@@ -267,10 +242,7 @@ bool sdSerialCommand(const String &line) {
       size_t want = remaining > sizeof(buf) ? sizeof(buf) : remaining;
       size_t n = Serial.readBytes(buf, want);
       if (n == 0) break;  // timeout
-      // sin mirar el retorno, una tarjeta llena o con fallo de escritura daba
-      // DONE igualmente y dejaba el fichero truncado en la SD: justo la entrada
-      // corrupta contra la que hay que protegerse luego al cargar el sprite
-      if (f.write(buf, n) != n) break;
+      f.write(buf, n);
       remaining -= n;
       Serial.println("#");  // ack: listo para el siguiente bloque
     }
@@ -278,10 +250,6 @@ bool sdSerialCommand(const String &line) {
     Serial.setTimeout(1000);
     sdDirty = (remaining == 0);
     Serial.println(remaining == 0 ? "DONE" : "ERR");
-    return true;
-  } else if (line == "SDINFO") {  // diagnostico remoto de "no me reconoce la SD"
-    Serial.printf("total=%llu used=%llu\n", SD_MMC.totalBytes(), SD_MMC.usedBytes());
-    Serial.println("DONE");
     return true;
   } else if (line == "LS") {
     File dir = SD_MMC.open("/mons");

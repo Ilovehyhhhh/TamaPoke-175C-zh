@@ -3,8 +3,32 @@
 固件的所有重要变更。版本号与时钟/设置界面（下滑）底部以及
 `web/manifest.json` 中显示的数字一致。
 
-从[网页安装器](https://socquique.github.io/TamaPoke/web/)更新时，**不**勾选
+从[网页安装器](https://shadowenemyx.github.io/TamaPoke/web/)更新时，**不**勾选
 “Erase device”即可保留你的宝可梦。
+
+## [2.0] - 2026-10-06
+
+### 新增（移植 ShadowEnemyx 扩展分支 + 保留中文）
+
+- 整体切换到 **ShadowEnemyx/TamaPoke** 扩展分支（固件 1.36.1）：386 只宝可梦
+  （前三世代）、属性相克战斗系统、5 个小游戏、远征 + 道具背包、每日目标、
+  性格/勋章/收藏家等级、RTC 昼夜、物种合成叫声、计步器与行走奖励、存档备份/恢复。
+- **简体中文作为第 7 种语言（默认）**：全部 234 条 UI 字符串、三种勋章名称、
+  386 个官方简体中文物种名（PokéAPI `zh-Hans`）、8 页帮助文本与战斗属性名。
+- 中文字形 `u8g2_font_unifont_t_chinese3`；文本测量集中在 `textW()/centerX()`，
+  光标补偿集中在 `setCur()/applyLangFont()`，拉丁语系语言不受影响。
+- `tools/dex_data.py` / `tools/gen_dex.py` 支持第 7 列中文名；`gen_dex.py` 显式
+  以 UTF-8 写出 `dex.h`（Windows 上避免用系统默认编码破坏中文字符）。
+- 测试与工具链切换到扩展分支的 `tests/`（host 测试 + Web 串口测试）。
+
+### 移除
+
+- 旧的 Gen-1（151 只）测试与工具（`test/`、`tools/gen_names.py`、
+  `tools/dex_names.py`、`tools/test_i18n_formats.py`）。
+
+---
+
+## [1.18] - 2026-10-06
 
 ## [1.18] - 2026-10-06
 
